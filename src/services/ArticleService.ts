@@ -89,4 +89,3 @@ export const processArticle = async (url: string): Promise<Article | null> => {
     return cleanedJson;
   };
   
-// processArticle("https://edition.cnn.com/2025/01/23/business/unitedhealthcare-new-ceo/index.html")
