@@ -4,28 +4,49 @@ import { getEmbedding } from './EmbeddingService';
 import { config } from '../config/config';
 
 export const storeArticle = async (article: Article) => {
-  const embedding = await getEmbedding(article.content);
-  if (!embedding.length) return;
-
-  const vectorData = {
-    id: Buffer.from(article.url).toString('base64'),
-    values: embedding,
-    metadata: {
-      title: article.title,
-      content: article.content,
-      url: article.url,
-      date: article.date
+  try {
+    // Validate article fields
+    if (!article.content || !article.url || !article.title || !article.date) {
+      throw new Error('Article is missing required fields');
     }
-  };
 
-  await axios.post(`${config.pineconeIndexUrl}/vectors/upsert`, {
-    vectors: [vectorData]
-  }, {
-    headers: {
-      'Api-Key': config.pineconeApiKey,
-      'Content-Type': 'application/json'
+    const embedding = await getEmbedding(article.content);
+    if (!embedding || !embedding.length) {
+      console.log(`No valid embedding for ${article.url}`);
+      return;
     }
-  });
+
+    const vectorData = {
+      id: Buffer.from(article.url).toString('base64'),
+      values: embedding,
+      metadata: {
+        title: article.title,
+        content: article.content,
+        url: article.url,
+        date: article.date,
+      },
+    };
+
+    // Log the data being sent to Pinecone
+    console.log(`Sending to Pinecone:`, JSON.stringify(vectorData));
+
+    // Example Pinecone upsert request (adjust URL and headers as needed)
+    const response = await axios.post(
+      config.pineconeIndexUrl,
+      { vectors: [vectorData] },
+      {
+        headers: {
+          'Api-Key': 'your-pinecone-api-key',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log(`Pinecone response:`, response.data);
+  } catch (error) {
+    console.error(`Error in storeArticle for ${article.url}:`, error.response?.data || error.message);
+    throw error; // Re-throw to let the consumer catch it
+  }
 };
 
 export const getArticleById = async (id: string): Promise<Article | null> => {

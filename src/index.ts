@@ -21,5 +21,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Start Kafka consumer (if using Kafka ingestion)
 runKafkaConsumer().catch(err => console.error('Kafka consumer error:', err));

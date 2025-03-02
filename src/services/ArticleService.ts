@@ -9,7 +9,7 @@ export const extractArticle = async (url: string): Promise<string | null> => {
     const { data } = await axios.get(url);
     const $ = load(data);
 
-    $('script, style, iframe, noscript, svg, canvas, video, audio, object, embed, applet, form, input, button, select, textarea, nav, aside, footer, [role="navigation"], [role="complementary"], [role="contentinfo"]').remove();
+    $('script, style').remove();
 
     const pageContent = $('body').text().replace(/\s+/g, ' ').trim();
 
@@ -27,6 +27,5 @@ export const processArticle = async (url: string): Promise<Article | null> => {
     let cleanedContent = await cleanArticleContent(article);
     let cleanedJson: Article = JSON.parse(cleanedContent) as Article;
     cleanedJson.url = url;
-    console.log(cleanedJson)
     return cleanedJson;
   };
