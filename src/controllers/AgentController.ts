@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { processArticle } from '../services/ArticleService';
-import { searchSimilarArticles, getArticleById, storeArticle } from '../services/VectorStoreService';
+import { getArticleById, storeArticle } from '../services/VectorStoreService';
+import {searchSimilarArticles} from '../services/SearchService';
 import { generateAnswer } from '../services/LLMService';
 import { Article } from '../models/Article';
 
