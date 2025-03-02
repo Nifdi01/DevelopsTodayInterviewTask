@@ -36,7 +36,7 @@ async function runConsumer() {
     await consumer.connect();
     console.log('Consumer connected successfully');
 
-    await consumer.subscribe({ topic: 'news', fromBeginning: true });
+    await consumer.subscribe({ topic: config.kafkaTopicName, fromBeginning: true });
     console.log('Subscribed to topic: news');
 
     await consumer.run({
@@ -87,4 +87,3 @@ async function processUrls(){
 }
 
 processUrls();
-console.log("Finished processing urls");

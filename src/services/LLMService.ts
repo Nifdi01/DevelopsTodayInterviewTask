@@ -27,7 +27,7 @@ export const cleanArticleContent = async (rawContent: string): Promise<string> =
         }
       ],
       generationConfig: {
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
       }
     }, {
       headers: {
@@ -85,7 +85,7 @@ export const generateAnswer = async (prompt: string): Promise<string> => {
         }
       ],
       generationConfig: {
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
       }
     }, {
       headers: {
