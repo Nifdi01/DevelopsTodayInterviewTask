@@ -10,18 +10,20 @@
 Create a `.env` file in the root directory with the following variables:
 
 ```
-# Pinecone settings
-PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_ENVIRONMENT=your-pinecone-environment
-PINECONE_INDEX_NAME=your-pinecone-index-name
+KAFKA_BROKER=
+KAFKA_USERNAME=
+KAFKA_PASSWORD=
+KAFKA_TOPIC_NAME=
+KAFKA_GROUP_ID_PREFIX=
 
-# Other service settings
-LLM_API_KEY=your-llm-api-key
-EMBEDDING_API_KEY=your-embedding-api-key
+PINECONE_API_KEY=
+PINECONE_INDEX_URL=
 
-# Kafka settings (if used)
-KAFKA_BROKERS=your-kafka-brokers
-KAFKA_TOPIC=your-kafka-topic
+PORT=
+
+GEMINI_API_KEY=
+GEMINI_GENERATE_ENDPOINT=
+GEMINI_EMBEDDING_ENDPOINT=
 ```
 
 ## Building and Running
