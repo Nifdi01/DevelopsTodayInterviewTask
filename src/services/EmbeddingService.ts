@@ -19,9 +19,11 @@ export const getEmbedding = async (text: string): Promise<number[]> => {
       {
         headers: {
           'Content-Type': 'application/json',
+          'x-goog-api-key': config.llmApiKey
         },
       }
     );
+
 
     return response.data.embedding.values;
   } catch (error) {

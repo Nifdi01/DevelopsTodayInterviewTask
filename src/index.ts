@@ -21,4 +21,4 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-runKafkaConsumer().catch(err => console.error('Kafka consumer error:', err));
+// runKafkaConsumer().catch(err => console.error('Kafka consumer error:', err));

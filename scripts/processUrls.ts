@@ -56,12 +56,11 @@ async function runConsumer() {
 
           const url = parsedMessage.value.url;
           const id = Buffer.from(url).toString('base64');
-
           let article = await getArticleById(id);
           if (!article) {
             article = await processArticle(url);
             if (article) {
-              console.log(`Processing article: ${url} with data:`, JSON.stringify(article));
+              console.log(`Processing article: ${url}`);
               await storeArticle(article);
               console.log(`${url} stored in database`);
             } else {
@@ -83,4 +82,9 @@ async function runConsumer() {
   }
 }
 
-runConsumer().catch(console.error);
+async function processUrls(){
+  runConsumer().catch(console.error);
+}
+
+processUrls();
+console.log("Finished processing urls");

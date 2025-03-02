@@ -5,18 +5,20 @@ export const cleanArticleContent = async (rawContent: string): Promise<string> =
   try {
     const prompt = `
         Clean and structure the following article content.
-        Return ONLY a object with these fields:
+        Return ONLY a valid JSON object with these fields:
         {
         "title": "Extract Title",
         "content": "The cleaned, structured content with paragraphs intact",
         "date": "Extract the publication date in YYYY-MM-DD format"
         }
+        
+        Do not include any explanation, markdown formatting, or code blocks. Return ONLY the JSON object.
 
         Article content:
         ${rawContent}
     `;
     
-    const response = await axios.post('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+    const response = await axios.post(config.generatorApiKey, {
       contents: [
         {
           parts: [
@@ -35,20 +37,46 @@ export const cleanArticleContent = async (rawContent: string): Promise<string> =
     });
     
     const responseText = response.data.candidates[0].content.parts[0].text.trim();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No valid JSON found in response");
-
-    return jsonMatch[0];
+    
+    let jsonText = responseText.replace(/```json|```/g, '').trim();
+    
+    const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[0];
+    }
+    
+    try {
+      JSON.parse(jsonText);
+      return jsonText;
+    } catch (jsonError) {
+      console.error('Invalid JSON from LLM:', jsonError);
+      console.log('Attempted to parse:', jsonText);
+      
+      const fallbackJson = {
+        title: "Unknown Title",
+        content: rawContent.substring(0, 5000),
+        date: new Date().toISOString().split('T')[0]
+      };
+      
+      return JSON.stringify(fallbackJson);
+    }
 
   } catch (error) {
     console.error('LLM cleaning error:', error);
-    return rawContent;
+    
+    const fallbackJson = {
+      title: "Unknown Title",
+      content: rawContent.substring(0, 5000), 
+      date: new Date().toISOString().split('T')[0]
+    };
+    
+    return JSON.stringify(fallbackJson);
   }
 };
 
 export const generateAnswer = async (prompt: string): Promise<string> => {
   try {
-    const response = await axios.post('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+    const response = await axios.post(config.generatorApiKey, {
       contents: [
         {
           parts: [

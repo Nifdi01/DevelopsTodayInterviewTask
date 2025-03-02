@@ -5,13 +5,13 @@ import { config } from '../config/config';
 
 export const storeArticle = async (article: Article) => {
   try {
-    // Validate article fields
     if (!article.content || !article.url || !article.title || !article.date) {
       throw new Error('Article is missing required fields');
     }
 
     const embedding = await getEmbedding(article.content);
     if (!embedding || !embedding.length) {
+      console.log(article.content)
       console.log(`No valid embedding for ${article.url}`);
       return;
     }
@@ -27,16 +27,13 @@ export const storeArticle = async (article: Article) => {
       },
     };
 
-    // Log the data being sent to Pinecone
-    console.log(`Sending to Pinecone:`, JSON.stringify(vectorData));
 
-    // Example Pinecone upsert request (adjust URL and headers as needed)
     const response = await axios.post(
       config.pineconeIndexUrl,
       { vectors: [vectorData] },
       {
         headers: {
-          'Api-Key': 'your-pinecone-api-key',
+          'Api-Key': config.pineconeApiKey,
           'Content-Type': 'application/json',
         },
       }
@@ -45,7 +42,7 @@ export const storeArticle = async (article: Article) => {
     console.log(`Pinecone response:`, response.data);
   } catch (error) {
     console.error(`Error in storeArticle for ${article.url}:`, error.response?.data || error.message);
-    throw error; // Re-throw to let the consumer catch it
+    throw error;
   }
 };
 
@@ -60,7 +57,6 @@ export const getArticleById = async (id: string): Promise<Article | null> => {
       }
     });
 
-    // Check if response.data exists and has a 'vectors' property
     if (!response.data || typeof response.data !== 'object' || !response.data.vectors) {
       console.error('Pinecone fetch response missing vectors:', response.data);
       return null;
@@ -81,27 +77,4 @@ export const getArticleById = async (id: string): Promise<Article | null> => {
     console.error('Error fetching article from Pinecone:', error);
     return null;
   }
-};
-
-export const searchSimilarArticles = async (query: string, topK: number = 5): Promise<Article[]> => {
-  const embedding = await getEmbedding(query);
-  if (!embedding.length) return [];
-
-  const response = await axios.post(`${config.pineconeIndexUrl}/query`, {
-    vector: embedding,
-    topK,
-    includeMetadata: true
-  }, {
-    headers: {
-      'Api-Key': config.pineconeApiKey,
-      'Content-Type': 'application/json'
-    }
-  });
-
-  return response.data.matches.map(match => ({
-    title: match.metadata.title,
-    content: match.metadata.content,
-    url: match.metadata.url,
-    date: match.metadata.date
-  }));
 };

@@ -8,11 +8,13 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "kafkajs": "^2.2.4",
+    "puppeteer": "^24.3.0",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.8",
+    "@types/puppeteer": "^5.4.7",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.6",
     "tsx": "^4.19.3"

@@ -5,6 +5,7 @@ export const config = {
   port: process.env.PORT || 3000,
   llmApiKey: process.env.GEMINI_API_KEY || '',
   embeddingApiKey: process.env.GEMINI_EMBEDDING_ENDPOINT || '',
+  generatorApiKey: process.env.GEMINI_GENERATE_ENDPOINT || '',
   pineconeApiKey: process.env.PINECONE_API_KEY || '',
   pineconeIndexUrl: process.env.PINECONE_INDEX_URL || '',
   kafkaBroker: process.env.KAFKA_BROKER || '',

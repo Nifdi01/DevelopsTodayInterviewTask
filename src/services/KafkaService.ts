@@ -4,7 +4,7 @@ import { processArticle } from './ArticleService';
 import { storeArticle } from './VectorStoreService';
 
 export const runKafkaConsumer = async () => {
-    const groupId = `${config.kafkaGroupIdPrefix}-nifdi-guliyev`;
+    const groupId = `${config.kafkaGroupIdPrefix}-${Date.now()}`;
     console.log(`Starting Kafka consumer with group ID: ${groupId}`);
     
     const kafka = new Kafka({
