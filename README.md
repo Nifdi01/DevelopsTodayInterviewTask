@@ -48,22 +48,6 @@ GEMINI_EMBEDDING_ENDPOINT=
    docker-compose down
    ```
 
-## Processing URLs from CSV
-
-To process your CSV file with URLs, run the following command:
-
-```bash
-docker exec agent-service npx tsx scripts/processUrls.ts
-```
-
-You can specify a different CSV file path using:
-
-```bash
-docker exec agent-service npx tsx scripts/processUrls.ts --file=/usr/src/app/src/data/your-file.csv
-```
-
-The results will be saved to a JSON file in the same directory as your CSV file.
-
 ## Project Structure
 
 Your current project structure:
@@ -98,19 +82,6 @@ Your current project structure:
         └── VectorStoreService.ts
 ```
 
-After adding the new scripts:
-```
-.
-├── docker-compose.yml
-├── Dockerfile
-├── package.json
-├── package-lock.json
-├── README.md
-├── scripts
-│   └── processUrls.ts
-└── src
-    ├── ...
-```
 
 ## Optimizations
 
