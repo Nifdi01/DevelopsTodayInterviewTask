@@ -1,121 +1,86 @@
-import { Kafka, Consumer, KafkaMessage } from 'kafkajs';
-import fs from 'fs';
-import csvParser from 'csv-parser';
-import { Pinecone, PineconeRecord } from '@pinecone-database/pinecone';
+import { Kafka, logLevel } from 'kafkajs';
 import { config } from '../src/config/config';
-import dotenv from 'dotenv';
-dotenv.config();
+import { processArticle } from '../src/services/ArticleService';
+import { getArticleById, storeArticle } from '../src/services/VectorStoreService';
 
-async function processArticle(url: string): Promise<void> {
-  console.log(`Processing article: ${url}`);
+const kafkaBroker = config.kafkaBroker;
+const kafkaUsername = config.kafkaUsername;
+const kafkaPassword = config.kafkaPassword;
+const groupIdPrefix = config.kafkaGroupIdPrefix;
 
+const groupId = `${groupIdPrefix}-${Date.now()}`;
+
+const kafka = new Kafka({
+  clientId: 'news-consumer',
+  brokers: [kafkaBroker],
+  ssl: true,
+  sasl: {
+    mechanism: 'plain',
+    username: kafkaUsername,
+    password: kafkaPassword,
+  },
+  logLevel: logLevel.INFO,
+});
+
+const consumer = kafka.consumer({ groupId });
+
+interface NewsMessage {
+  event: string;
+  value: {
+    url?: string;
+  };
+}
+
+async function runConsumer() {
   try {
-      const embedding = Array.from({ length: 1536 }, () => Math.random());
+    await consumer.connect();
+    console.log('Consumer connected successfully');
 
-      const pinecone = new Pinecone({ apiKey: config.pineconeApiKey });
-      const index = pinecone.Index(config.pineconeIndexUrl);
+    await consumer.subscribe({ topic: 'news', fromBeginning: true });
+    console.log('Subscribed to topic: news');
 
-      const record: PineconeRecord = {
-          id: generateId(url),
-          values: embedding,
-          metadata: {
-              url: url,
-          },
-      };
-
-      await index.upsert([record]);
-
-      console.log(`Article processed and inserted into Pinecone: ${url}`);
-  } catch (error) {
-    console.error(`Error processing article ${url}:`, error);
-    throw error;
-  }
-}
-
-function generateId(url: string): string {
-    return Buffer.from(url).toString('base64');
-}
-
-async function consumeMessages(): Promise<void> {
-  const kafka = new Kafka({
-    clientId: 'news-consumer',
-    brokers: [config.kafkaBroker],
-    sasl: {
-      mechanism: 'plain',
-      username: config.kafkaUsername,
-      password: config.kafkaPassword,
-    },
-    ssl: true,
-  });
-
-  const consumer: Consumer = kafka.consumer({ groupId: `${config.kafkaGroupIdPrefix}${Date.now()}` });
-
-  await consumer.connect();
-  await consumer.subscribe({ topic: config.kafkaTopicName, fromBeginning: true });
-
-  await consumer.run({
-    eachMessage: async ({ message }) => {
-      try {
-        if (message.value) {
-          const url = message.value.toString();
-          await processArticle(url);
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const value = message.value?.toString();
+        if (!value) {
+          console.log('Received an empty message');
+          return;
         }
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    },
-  });
-}
 
-async function produceMessages(): Promise<void> {
-  const kafka = new Kafka({
-    clientId: 'news-producer',
-    brokers: [config.kafkaBroker],
-    sasl: {
-      mechanism: 'plain',
-      username: config.kafkaUsername,
-      password: config.kafkaPassword,
-    },
-    ssl: true,
-  });
-
-  const producer = kafka.producer();
-  await producer.connect();
-
-  return new Promise<void>((resolve, reject) => {
-    fs.createReadStream('src/data/articles_dataset.csv')
-      .pipe(csvParser())
-      .on('data', async (row: { Source: string; URL: string }) => {
         try {
-          await producer.send({
-            topic: config.kafkaTopicName,
-            messages: [{ value: row.URL }],
-          });
-        } catch (error) {
-          console.error('Error sending message:', error);
-          reject(error);
-        }
-      })
-      .on('end', async () => {
-        console.log('CSV file processed and messages sent.');
-        await producer.disconnect();
-        resolve();
-      })
-      .on('error', (error) => {
-        console.error('Error reading CSV:', error);
-        reject(error);
-      });
-  });
-}
+          const parsedMessage: NewsMessage = JSON.parse(value);
+          if (parsedMessage.event !== 'new-article' || !parsedMessage.value?.url) {
+            console.log(`Skipping invalid message: ${value}`);
+            return;
+          }
 
-async function main() {
-  try {
-    await produceMessages();
-    await consumeMessages();
+          const url = parsedMessage.value.url;
+          const id = Buffer.from(url).toString('base64');
+
+          let article = await getArticleById(id);
+          if (!article) {
+            article = await processArticle(url);
+            if (article) {
+              console.log(`Processing article: ${url} with data:`, JSON.stringify(article));
+              await storeArticle(article);
+              console.log(`${url} stored in database`);
+            } else {
+              console.log(`Failed to process article from ${url}`);
+            }
+          } else {
+            console.log(`${url} already exists in database`);
+          }
+        } catch (error) {
+          console.error(`Error processing message from ${topic} [partition ${partition}]:`, error);
+        }
+      },
+    });
   } catch (error) {
-    console.error('Application error:', error);
-    process.exit(1);
+    console.error('Consumer error:', error);
+    if (error.code === 29) {
+      console.error('TOPIC_AUTHORIZATION_FAILED: Verify that your credentials have permission to read the "news" topic.');
+    }
   }
 }
 
-main();
+runConsumer().catch(console.error);

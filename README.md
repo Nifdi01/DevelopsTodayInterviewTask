@@ -48,6 +48,12 @@ GEMINI_EMBEDDING_ENDPOINT=
    docker-compose down
    ```
 
+### Data ingesting
+After running the system the data can be ingested with the following command:
+```
+docker exec agent-service npx tsx scripts/processUrls.ts
+```
+
 ## Project Structure
 
 Your current project structure:
