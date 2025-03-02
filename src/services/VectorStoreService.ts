@@ -29,21 +29,37 @@ export const storeArticle = async (article: Article) => {
 };
 
 export const getArticleById = async (id: string): Promise<Article | null> => {
-  const response = await axios.post(`${config.pineconeIndexUrl}/vectors/fetch`, {
-    ids: [id]
-  }, {
-    headers: {
-      'Api-Key': config.pineconeApiKey,
-      'Content-Type': 'application/json'
+  try {
+    const response = await axios.post(`${config.pineconeIndexUrl}/vectors/fetch`, {
+      ids: [id]
+    }, {
+      headers: {
+        'Api-Key': config.pineconeApiKey,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // Check if response.data exists and has a 'vectors' property
+    if (!response.data || typeof response.data !== 'object' || !response.data.vectors) {
+      console.error('Pinecone fetch response missing vectors:', response.data);
+      return null;
     }
-  });
-  const vector = response.data.vectors[id];
-  return vector ? {
-    title: vector.metadata.title,
-    content: vector.metadata.content,
-    url: vector.metadata.url,
-    date: vector.metadata.date
-  } : null;
+
+    const vector = response.data.vectors[id];
+    if (!vector) {
+      return null;
+    }
+
+    return {
+      title: vector.metadata.title,
+      content: vector.metadata.content,
+      url: vector.metadata.url,
+      date: vector.metadata.date
+    };
+  } catch (error) {
+    console.error('Error fetching article from Pinecone:', error);
+    return null;
+  }
 };
 
 export const searchSimilarArticles = async (query: string, topK: number = 5): Promise<Article[]> => {
