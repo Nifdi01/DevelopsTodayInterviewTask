@@ -112,8 +112,11 @@ After adding the new scripts:
     ├── ...
 ```
 
-## Troubleshooting
+## Optimizations
 
-- **Connection issues with Pinecone**: Verify your Pinecone API key and environment variables in the `.env` file
-- **CSV file not found**: Ensure your CSV file is mounted correctly in the volume and the path is correct
-- **Memory issues**: You may need to allocate more memory to Docker in your Docker settings
+- **Caching**: Redis is used to cache frequently used data (embeddings) to reduce API calls and speed up responses.
+- **Batch Processing**: URLs and data are processed in batches to reduce overhead.
+- **Parallel Processing**: Tasks are processed concurrently using Kafka to improve response times.
+- **Lazy Loading**: Data is fetched only when needed, improving efficiency.
+- **Optimized Pinecone Calls**: Data is sent in batches to Pinecone to reduce API costs and improve performance.
+
