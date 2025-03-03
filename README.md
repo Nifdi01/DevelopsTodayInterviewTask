@@ -56,7 +56,7 @@ docker exec agent-service npx tsx scripts/processUrls.ts
 
 ## Project Structure
 
-Your current project structure:
+This is the current project structure:
 ```
 .
 ├── docker-compose.yml
